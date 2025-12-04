@@ -11,7 +11,6 @@ import {
 import useLogin from "../../hooks/useLogin";
 import { AUTH_ENDPOINTS, BASE_URL } from "../../api/endPoints";
 import { Toaster } from "react-hot-toast";
-import { Loader } from "lucide-react";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -43,7 +42,7 @@ export default function LoginPage() {
       username: username,
       password: password,
     };
-    await login(`${BASE_URL}${AUTH_ENDPOINTS.LOGIN}`, data, "/dashboard");
+    await login(`${BASE_URL}${AUTH_ENDPOINTS.LOGIN}`, data, "/dashboard/");
   };
 
   return (
@@ -73,7 +72,7 @@ export default function LoginPage() {
           <CustomAuthButton type="submit" text={isLoading ? "Loading..." : "Login" } />
 
           <CustomAuthText
-            href="/sign-up"
+            to="/auth/sign-up"
             text="Don't have an account?"
             linkText="Create one"
           />

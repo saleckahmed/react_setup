@@ -7,7 +7,6 @@ import CustomAuthButton from "../../components/auth/CustomAuthButton";
 import CustomAuthText from "../../components/auth/CustomAuthText";
 import { AUTH_ENDPOINTS, BASE_URL } from "../../api/endPoints";
 import useRegister from "../../hooks/useRegister";
-import { Loader } from "lucide-react";
 import { validatePassword } from "../../validation/validations";
 
 const validator = (username, password, confirmPassword) => {
@@ -45,7 +44,7 @@ export default function SignUpPage() {
     await register(
       `${BASE_URL}${AUTH_ENDPOINTS.REGISTER}`,
       { username, password },
-      "/login"
+      "/auth/login"
     );
   };
 
@@ -87,7 +86,7 @@ export default function SignUpPage() {
         />
 
         <CustomAuthText
-          href="/login"
+          to="/auth/login"
           text="Already have an account?"
           linkText="Login here"
         />

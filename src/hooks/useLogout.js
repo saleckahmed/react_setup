@@ -24,7 +24,7 @@ export default function useLogout() {
       authService.clearTokens();
       contextLogout();
       setIsAuthenticated(true)
-      navigate("/login");
+      navigate("/auth/login");
       return true;
     } catch (err) {
       console.error("Logout error:", err);
