@@ -16,7 +16,7 @@ export default function useLogout() {
     try {
       if (endPoint) {
         try {
-          await apiPost(endPoint);
+          await axios.post(endPoint);
         } catch (error) {
           console.warn("Backend logout failed, clearing tokens anyway", error);
         }

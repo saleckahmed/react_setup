@@ -174,7 +174,7 @@ apiClient.interceptors.response.use(
           if (!refreshToken) {
             // No refresh token - force logout
             authService.clearTokens();
-            window.location.href = "/login";
+            window.location.href = "/auth/login";
             return Promise.reject(handleError(error));
           }
 
@@ -204,7 +204,7 @@ apiClient.interceptors.response.use(
         } catch (refreshError) {
           // Refresh failed - force logout
           authService.clearTokens();
-          window.location.href = "/login";
+          window.location.href = "/auth/login";
           isRefreshing = false;
           return Promise.reject(handleError(refreshError));
         } finally {

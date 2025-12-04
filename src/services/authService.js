@@ -108,10 +108,10 @@ const authService = {
 
       // Redirect to login
       if (typeof window !== "undefined") {
-        window.location.href = "/login";
+        window.location.href = "/auth/login";
       }
     } catch (error) {
-      console.error("❌ Error clearing tokens:", error);
+      console.error(" Error clearing tokens:", error);
     }
   },
 
