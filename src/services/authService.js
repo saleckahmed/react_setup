@@ -6,83 +6,148 @@ const authService = {
   isRefreshing: false,
   failedQueue: [],
 
-  // Set tokens in storage with proper expiration calculation
+  /**
+   * Set tokens in storage with proper expiration calculation
+   */
   setTokens: (accessToken, refreshToken, expiresIn = 3600) => {
+    // Validate tokens
     if (!accessToken || !refreshToken) {
-      console.error("Access token and refresh token are required");
-      return;
+      console.error("❌ Access token and refresh token are required");
+      return false;
     }
 
-    const expiresAt = Date.now() + expiresIn * 1000;
+    try {
+      const expiresAt = Date.now() + expiresIn * 1000;
 
-    sessionStorage.setItem("accessToken", accessToken);
-    localStorage.setItem("refreshToken", refreshToken);
-    sessionStorage.setItem("tokenExpiresAt", expiresAt.toString());
+      sessionStorage.setItem("accessToken", accessToken);
+      localStorage.setItem("refreshToken", refreshToken);
+      sessionStorage.setItem("tokenExpiresAt", expiresAt.toString());
 
-    // Schedule token refresh 5 minutes before expiration
-    authService.scheduleTokenRefresh(expiresIn - 300);
+      console.log("✅ Tokens saved successfully");
+
+      // Schedule token refresh 5 minutes before expiration
+      authService.scheduleTokenRefresh(expiresIn - 300);
+      return true;
+    } catch (error) {
+      console.error("❌ Error saving tokens:", error);
+      return false;
+    }
   },
 
-  // Get access token from storage
+  /**
+   * Get access token from storage
+   */
   getAccessToken: () => {
-    return sessionStorage.getItem("accessToken");
+    try {
+      return sessionStorage.getItem("accessToken");
+    } catch (error) {
+      console.error("❌ Error getting access token:", error);
+      return null;
+    }
   },
 
-  // Get refresh token from storage
+  /**
+   * Get refresh token from storage
+   */
   getRefreshToken: () => {
-    return localStorage.getItem("refreshToken");
+    try {
+      return localStorage.getItem("refreshToken");
+    } catch (error) {
+      console.error("❌ Error getting refresh token:", error);
+      return null;
+    }
   },
 
-  // Check if user is authenticated
+  /**
+   * Check if user is authenticated
+   */
   isAuthenticated: () => {
     const accessToken = authService.getAccessToken();
     return !!accessToken && !authService.isTokenExpired();
   },
 
-  // Clear all tokens (logout)
-  clearTokens: () => {
-    sessionStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    sessionStorage.removeItem("tokenExpiresAt");
-
-    if (authService.refreshTimer) {
-      clearTimeout(authService.refreshTimer);
-      authService.refreshTimer = null;
-    }
-
-    authService.isRefreshing = false;
-    authService.failedQueue = [];
-
-    // Redirect to login
-    window.location.href = "/login";
-  },
-
-  // Schedule automatic token refresh
-  scheduleTokenRefresh: (expiresIn) => {
-    // Clear existing timer
-    if (authService.refreshTimer) {
-      clearTimeout(authService.refreshTimer);
-    }
-
-    // Convert seconds to milliseconds and schedule refresh
-    if (expiresIn > 0) {
-      authService.refreshTimer = setTimeout(() => {
-        authService.refreshAccessToken();
-      }, expiresIn * 1000);
-    }
-  },
-
-  // Check if token is expired
+  /**
+   * Check if token is expired
+   */
   isTokenExpired: () => {
-    const expiresAt = sessionStorage.getItem("tokenExpiresAt");
-    if (!expiresAt) return true;
-    return Date.now() > parseInt(expiresAt);
+    try {
+      const expiresAt = sessionStorage.getItem("tokenExpiresAt");
+      if (!expiresAt) {
+        console.warn("⚠️ No token expiry found");
+        return true;
+      }
+      const isExpired = Date.now() > parseInt(expiresAt);
+      if (isExpired) {
+        console.warn("⚠️ Access token expired");
+      }
+      return isExpired;
+    } catch (error) {
+      console.error("❌ Error checking token expiry:", error);
+      return true;
+    }
   },
 
-  // Refresh access token using refresh token
+  /**
+   * Clear all tokens (logout)
+   */
+  clearTokens: () => {
+    try {
+      sessionStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      sessionStorage.removeItem("tokenExpiresAt");
+
+      if (authService.refreshTimer) {
+        clearTimeout(authService.refreshTimer);
+        authService.refreshTimer = null;
+      }
+
+      authService.isRefreshing = false;
+      authService.failedQueue = [];
+
+      console.log("✅ Tokens cleared - redirecting to login");
+
+      // Redirect to login
+      if (typeof window !== "undefined") {
+        window.location.href = "/login";
+      }
+    } catch (error) {
+      console.error("❌ Error clearing tokens:", error);
+    }
+  },
+
+  /**
+   * Schedule automatic token refresh before expiration
+   */
+  scheduleTokenRefresh: (expiresIn) => {
+    try {
+      // Clear existing timer to prevent multiple timers
+      if (authService.refreshTimer) {
+        clearTimeout(authService.refreshTimer);
+      }
+
+      // Convert seconds to milliseconds and schedule refresh
+      if (expiresIn > 0) {
+        authService.refreshTimer = setTimeout(() => {
+          console.log("⏰ Auto-refreshing token...");
+          authService.refreshAccessToken();
+        }, expiresIn * 1000);
+
+        console.log(`✅ Token refresh scheduled in ${expiresIn} seconds`);
+      } else {
+        console.warn("⚠️ Invalid expiration time");
+      }
+    } catch (error) {
+      console.error("❌ Error scheduling token refresh:", error);
+    }
+  },
+
+  /**
+   * Refresh access token using refresh token
+   */
   refreshAccessToken: async () => {
     // Prevent multiple simultaneous refresh requests
     if (authService.isRefreshing) {
+      console.log("⏳ Token refresh already in progress...");
       return new Promise((resolve, reject) => {
         authService.failedQueue.push({ resolve, reject });
       });
@@ -92,9 +157,10 @@ const authService = {
     const refreshToken = authService.getRefreshToken();
 
     if (!refreshToken) {
+      console.error("❌ No refresh token found");
       authService.isRefreshing = false;
       authService.clearTokens();
-      return;
+      return false;
     }
 
     try {
@@ -104,30 +170,38 @@ const authService = {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ refreshToken }),
+        timeout: 15000, // 15 second timeout
       });
 
       if (!response.ok) {
-        throw new Error("Token refresh failed");
+        throw new Error(`Token refresh failed with status ${response.status}`);
       }
 
       const data = await response.json();
-      const {
-        access: accessToken,
-        refresh: newRefreshToken,
-        expires_in: expiresIn,
-      } = data;
+
+      // Handle different response formats
+      const accessToken = data.access || data.accessToken;
+      const newRefreshToken = data.refresh || data.refreshToken;
+      const expiresIn = data.expires_in || data.expiresIn || 3600;
+
+      if (!accessToken) {
+        throw new Error("No access token in refresh response");
+      }
 
       // Update tokens with new values
-      authService.setTokens(accessToken, newRefreshToken, expiresIn || 3600);
+      authService.setTokens(accessToken, newRefreshToken || refreshToken, expiresIn);
 
       // Process queued requests
-      authService.failedQueue.forEach(({ resolve }) => resolve());
+      authService.failedQueue.forEach(({ resolve }) => resolve(true));
       authService.failedQueue = [];
       authService.isRefreshing = false;
 
+      console.log("✅ Access token refreshed successfully");
       return true;
     } catch (error) {
-      console.error("Token refresh error:", error);
+      console.error("❌ Token refresh error:", error.message);
+
+      // Reject all queued requests
       authService.failedQueue.forEach(({ reject }) => reject(error));
       authService.failedQueue = [];
       authService.isRefreshing = false;
@@ -138,33 +212,63 @@ const authService = {
     }
   },
 
-  // Initialize auth service (call on app startup)
+  /**
+   * Initialize auth service (call on app startup)
+   */
   init: async () => {
-    const accessToken = authService.getAccessToken();
-    const refreshToken = authService.getRefreshToken();
+    try {
+      const accessToken = authService.getAccessToken();
+      const refreshToken = authService.getRefreshToken();
 
-    if (!accessToken || !refreshToken) {
-      return;
-    }
+      if (!accessToken || !refreshToken) {
+        console.log("⚠️ No tokens found - user not authenticated");
+        return false;
+      }
 
-    // If token is expired, refresh immediately
-    if (authService.isTokenExpired()) {
-      await authService.refreshAccessToken();
-    } else {
-      // Schedule refresh for later
-      const expiresAt = parseInt(sessionStorage.getItem("tokenExpiresAt"));
-      const timeUntilExpiry = Math.max(0, (expiresAt - Date.now()) / 1000);
-      authService.scheduleTokenRefresh(Math.max(60, timeUntilExpiry - 300));
+      console.log("🔄 Initializing auth service...");
+
+      // If token is expired, refresh immediately
+      if (authService.isTokenExpired()) {
+        console.log("🔄 Token expired - refreshing immediately...");
+        const refreshed = await authService.refreshAccessToken();
+        return refreshed;
+      } else {
+        // Schedule refresh for later
+        const expiresAt = parseInt(sessionStorage.getItem("tokenExpiresAt"));
+        const timeUntilExpiry = Math.max(0, (expiresAt - Date.now()) / 1000);
+        const scheduleTime = Math.max(60, timeUntilExpiry - 300);
+
+        authService.scheduleTokenRefresh(scheduleTime);
+        console.log("✅ Auth service initialized");
+        return true;
+      }
+    } catch (error) {
+      console.error("❌ Auth initialization error:", error);
+      return false;
     }
+  },
+
+  /**
+   * Get user authentication status
+   */
+  getAuthStatus: () => {
+    return {
+      isAuthenticated: authService.isAuthenticated(),
+      hasAccessToken: !!authService.getAccessToken(),
+      hasRefreshToken: !!authService.getRefreshToken(),
+      isTokenExpired: authService.isTokenExpired(),
+    };
   },
 };
 
-// Axios interceptor to handle 401 and refresh tokens
+/**
+ * Axios interceptor to handle 401 and refresh tokens
+ */
 export const setupTokenInterceptor = (axiosInstance) => {
   axiosInstance.interceptors.response.use(
     (response) => response,
     async (error) => {
-      const originalRequest = error.config;
+      const originalRequest = error.config || {};
 
       // If 401 and not already retried
       if (error.response?.status === 401 && !originalRequest._retry) {
@@ -172,12 +276,26 @@ export const setupTokenInterceptor = (axiosInstance) => {
 
         try {
           const refreshed = await authService.refreshAccessToken();
+
           if (refreshed) {
             const newAccessToken = authService.getAccessToken();
-            originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-            return axiosInstance(originalRequest);
+
+            if (newAccessToken) {
+              originalRequest.headers = {
+                ...originalRequest.headers,
+                Authorization: `Bearer ${newAccessToken}`,
+              };
+              console.log("🔄 Retrying request with new token...");
+              return axiosInstance(originalRequest);
+            } else {
+              throw new Error("No access token after refresh");
+            }
+          } else {
+            throw new Error("Token refresh failed");
           }
         } catch (refreshError) {
+          console.error("❌ Failed to refresh token:", refreshError);
+          authService.clearTokens();
           return Promise.reject(refreshError);
         }
       }

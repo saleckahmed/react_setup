@@ -13,7 +13,7 @@ export default function useRegister() {
   const handleRegister = async (endPoint, data, navigateUrl) => {
     setIsLoading(true);
     try {
-      const res = await axios.post(endPoint, data);
+      const res = await apiPost(endPoint, data);
 
       if (res?.status === 201 || res?.status === 200) {
         const { access, refresh, expires_in } = res.data;

@@ -3,10 +3,11 @@ import { Menu, X } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import useLogout from '../../hooks/useLogout';
 import { Link } from 'react-router-dom';
+import CustomLoader from './CustomLoader';
 
-export default function Navbar() {
+export default function CustomNavbar() {
     const { isAuthenticated } = useAuth();
-    const [ isOpen, setIsOpen] = useState(false);
+    const [isOpen, setIsOpen] = useState(false);
     const { logout, isLoading } = useLogout();
 
     const toggleMenu = () => {
@@ -14,10 +15,10 @@ export default function Navbar() {
     };
 
     return (
-        <nav className="bg-white shadow-md">
+        <nav className="bg-white shadow-md absolute top-0 left-0 right-0">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-14">
-                    <div className="flex-shrink-0">
+                    <div className="shrink-0">
                         <span className="text-blue-600 text-lg font-bold">MyProducts</span>
                     </div>
                     <div className="hidden md:flex items-center gap-6">
@@ -27,14 +28,14 @@ export default function Navbar() {
                         <Link to="/products" className="text-blue-600 hover:text-blue-800 text-sm font-medium transition">
                             Products
                         </Link>
-                        
+
                         {isAuthenticated ? (
                             <button onClick={logout} disabled={isLoading} className="bg-blue-600 text-white hover:bg-blue-700 px-3 py-1.5 rounded text-sm font-medium transition">
                                 {isLoading ? "Logging out..." : "Logout"}
                             </button>
                         ) : (
                             <Link to="/auth/login" className="bg-blue-600 text-white hover:bg-blue-700 px-3 py-1.5 rounded text-sm font-medium transition">
-                            Login
+                                Login
                             </Link>
                         )}
                     </div>
@@ -57,15 +58,15 @@ export default function Navbar() {
                         <Link to="/products" className="block text-blue-600 hover:text-blue-800 text-sm font-medium py-1.5 transition">
                             Products
                         </Link>
-                
+
                         {isAuthenticated ? (
                             <button onClick={logout} disabled={isLoading} className="block text-blue-600 hover:text-blue-800 text-sm font-medium py-1.5 transition">
-                                {isLoading ? "Logging out..." : "Logout"}
+                                {isLoading ? <CustomLoader /> : "Logout"}
                             </button>
                         ) : (
-                           <Link to="/auth/login" className="block text-blue-600 hover:text-blue-800 text-sm font-medium py-1.5 transition">
-                           Login
-                           </Link>
+                            <Link to="/auth/login" className="block text-blue-600 hover:text-blue-800 text-sm font-medium py-1.5 transition">
+                                Login
+                            </Link>
                         )}
                     </div>
                 </div>

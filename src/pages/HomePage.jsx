@@ -1,10 +1,16 @@
 import React from 'react'
-import Navbar from '../components/shared/Navbar'
+import CustomNavbar from '../components/shared/CustomNavbar'
+import HomePageContent from '../components/home/HomePageContent'
+import CustomFooter from '../components/shared/CustomFooter'
 
 export default function HomePage() {
   return (
     <div>
-      <Navbar />
+      <CustomNavbar />
+      <HomePageContent />
+      
+      
+      <CustomFooter />
     </div>
   )
 }

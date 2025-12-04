@@ -2,6 +2,7 @@
 import { useAuth } from "../../hooks/useAuth";
 import useLogout from "../../hooks/useLogout";
 import { Loader } from "lucide-react";
+import CustomLoader from "../shared/CustomLoader";
 const SettingsIcon = () => (
   <svg
     className="w-5 h-5"
@@ -78,7 +79,7 @@ const DashboardNavbar = () => {
           onClick={handleLogout}
           className="cursor-pointer flex items-center px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg shadow-md hover:bg-blue-700 transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
         >
-          {!isLoading ? <LogoutIcon /> : <Loader size={14}/>}
+          {!isLoading ? <LogoutIcon /> : <CustomLoader />}
 
           <span className="ml-2">Logout</span>
         </button>
